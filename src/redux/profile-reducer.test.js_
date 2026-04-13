@@ -1,0 +1,38 @@
+//import App from '../App';
+import profileReducer, { addPostActionCreator, deletePosts } from './profile-reducer';
+//import ReactDOM from 'reactDOM';
+let state = {
+  posts: [
+    { id: 1, message: 'Hi, how a you?', likesCount: 12 },
+    { id: 2, message: "it's, my first post", likesCount: 23 },
+  ],
+};
+it('length of posts shoild be incremented', () => {
+  //1.test data
+  let action = addPostActionCreator('it-kamasutra.com');
+
+  //2.action
+  let newState = profileReducer(state, action);
+  //3.expection
+  expect(newState.posts.length).toBe(3);
+});
+it('message it-kamasutra.com', () => {
+  //1.test data
+  let action = addPostActionCreator('it-kamasutra.com');
+
+  //2.action
+  let newState = profileReducer(state, action);
+  //3.expection
+
+  expect(newState.posts[2].message).toBe('it-kamasutra.com');
+});
+it('delete posts', () => {
+  //1.test data
+  let action = deletePosts(1);
+
+  //2.action
+  let newState = profileReducer(state, action);
+  //3.expection
+
+  expect(newState.posts.length).toBe(1);
+});

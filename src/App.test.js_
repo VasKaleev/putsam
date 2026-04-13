@@ -1,0 +1,312 @@
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { BrowserRouter, MemoryRouter } from 'react-router-dom';
+import configureStore from 'redux-mock-store';
+import thunk from 'redux-thunk';
+import SamuraiJSApp from './App';
+
+// Настраиваем mock store
+const middlewares = [thunk];
+const mockStore = configureStore(middlewares);
+
+// Мокируем все компоненты, чтобы изолировать тестирование App
+jest.mock('./components/Header/HeaderContainer', () => () => (
+  <div data-testid="header">Header Mock</div>
+));
+jest.mock('./components/Navbar/Navbar', () => () => <div data-testid="navbar">Navbar Mock</div>);
+jest.mock('./components/common/Preloader/Preloader', () => () => (
+  <div data-testid="preloader">Loading...</div>
+));
+
+// Мокируем компоненты для роутов
+jest.mock('./components/Dialogs/DialogsContainer', () => () => (
+  <div data-testid="dialogs">Dialogs Page</div>
+));
+jest.mock('./components/Profile/ProfileContainer', () => () => (
+  <div data-testid="profile">Profile Page</div>
+));
+jest.mock('./components/Users/UsersContainer', () => () => (
+  <div data-testid="users">Users Page</div>
+));
+jest.mock('./components/Login/Login', () => () => <div data-testid="login">Login Page</div>);
+jest.mock('./components/News/News', () => () => <div data-testid="news">News Page</div>);
+jest.mock('./components/Music/Music', () => () => <div data-testid="music">Music Page</div>);
+jest.mock('./components/Settings/Settings', () => () => (
+  <div data-testid="settings">Settings Page</div>
+));
+
+// Мокируем action creators
+jest.mock('./redux/app-reducer', () => ({
+  initializeApp: () => ({ type: 'INITIALIZE_APP' }),
+}));
+
+describe('App Component', () => {
+  let store;
+
+  beforeEach(() => {
+    // Сбрасываем store перед каждым тестом
+    store = mockStore({
+      app: {
+        initialized: false,
+        globalError: null,
+      },
+    });
+  });
+
+  test('показывает Preloader когда приложение не инициализировано', () => {
+    render(
+      <Provider store={store}>
+        <BrowserRouter>
+          <SamuraiJSApp />
+        </BrowserRouter>
+      </Provider>,
+    );
+
+    expect(screen.getByTestId('preloader')).toBeInTheDocument();
+    expect(screen.queryByTestId('header')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('navbar')).not.toBeInTheDocument();
+  });
+
+  test('показывает основной контент после инициализации', async () => {
+    // Меняем состояние инициализации
+    store = mockStore({
+      app: {
+        initialized: true,
+        globalError: null,
+      },
+    });
+
+    render(
+      <Provider store={store}>
+        <BrowserRouter>
+          <SamuraiJSApp />
+        </BrowserRouter>
+      </Provider>,
+    );
+
+    // Проверяем, что прелоадер исчез
+    expect(screen.queryByTestId('preloader')).not.toBeInTheDocument();
+
+    // Проверяем, что основные компоненты отображаются
+    expect(screen.getByTestId('header')).toBeInTheDocument();
+    expect(screen.getByTestId('navbar')).toBeInTheDocument();
+
+    // По умолчанию должен быть профиль (роут '/')
+    expect(screen.getByTestId('profile')).toBeInTheDocument();
+  });
+
+  describe('Роутинг', () => {
+    test('рендерит ProfileContainer на главном роуте', () => {
+      store = mockStore({
+        app: { initialized: true },
+      });
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter initialEntries={['/']}>
+            <SamuraiJSApp />
+          </MemoryRouter>
+        </Provider>,
+      );
+
+      expect(screen.getByTestId('profile')).toBeInTheDocument();
+    });
+
+    test('рендерит ProfileContainer с userId', () => {
+      store = mockStore({
+        app: { initialized: true },
+      });
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter initialEntries={['/profile/123']}>
+            <SamuraiJSApp />
+          </MemoryRouter>
+        </Provider>,
+      );
+
+      expect(screen.getByTestId('profile')).toBeInTheDocument();
+    });
+
+    test('рендерит DialogsContainer на роуте /dialogs', () => {
+      store = mockStore({
+        app: { initialized: true },
+      });
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter initialEntries={['/dialogs']}>
+            <SamuraiJSApp />
+          </MemoryRouter>
+        </Provider>,
+      );
+
+      expect(screen.getByTestId('dialogs')).toBeInTheDocument();
+    });
+
+    test('рендерит UsersContainer на роуте /users', () => {
+      store = mockStore({
+        app: { initialized: true },
+      });
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter initialEntries={['/users']}>
+            <SamuraiJSApp />
+          </MemoryRouter>
+        </Provider>,
+      );
+
+      expect(screen.getByTestId('users')).toBeInTheDocument();
+    });
+
+    test('рендерит LoginPage на роуте /login', () => {
+      store = mockStore({
+        app: { initialized: true },
+      });
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter initialEntries={['/login']}>
+            <SamuraiJSApp />
+          </MemoryRouter>
+        </Provider>,
+      );
+
+      expect(screen.getByTestId('login')).toBeInTheDocument();
+    });
+
+    test('рендерит News на роуте /news', () => {
+      store = mockStore({
+        app: { initialized: true },
+      });
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter initialEntries={['/news']}>
+            <SamuraiJSApp />
+          </MemoryRouter>
+        </Provider>,
+      );
+
+      expect(screen.getByTestId('news')).toBeInTheDocument();
+    });
+
+    test('рендерит Music на роуте /music', () => {
+      store = mockStore({
+        app: { initialized: true },
+      });
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter initialEntries={['/music']}>
+            <SamuraiJSApp />
+          </MemoryRouter>
+        </Provider>,
+      );
+
+      expect(screen.getByTestId('music')).toBeInTheDocument();
+    });
+
+    test('рендерит Settings на роуте /settings', () => {
+      store = mockStore({
+        app: { initialized: true },
+      });
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter initialEntries={['/settings']}>
+            <SamuraiJSApp />
+          </MemoryRouter>
+        </Provider>,
+      );
+
+      expect(screen.getByTestId('settings')).toBeInTheDocument();
+    });
+  });
+
+  test('вызывает initializeApp при монтировании', () => {
+    const initializeAppMock = jest.fn();
+
+    // Создаем store с mocked dispatch
+    const storeWithMock = {
+      ...store,
+      dispatch: jest.fn((action) => {
+        if (typeof action === 'function') {
+          action();
+        }
+        return action;
+      }),
+    };
+
+    jest.spyOn(React, 'useEffect').mockImplementationOnce((f) => f());
+
+    render(
+      <Provider store={storeWithMock}>
+        <BrowserRouter>
+          <SamuraiJSApp />
+        </BrowserRouter>
+      </Provider>,
+    );
+
+    // Проверяем, что initializeApp был вызван
+    expect(initializeAppMock).toHaveBeenCalled();
+  });
+
+  test('корректно обрабатывает ошибки инициализации', async () => {
+    // Мокируем console.error чтобы избежать спама в консоли
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    // Симулируем ошибку при инициализации
+    jest.spyOn(require('./redux/app-reducer'), 'initializeApp').mockImplementation(() => {
+      throw new Error('Initialization failed');
+    });
+
+    render(
+      <Provider store={store}>
+        <BrowserRouter>
+          <SamuraiJSApp />
+        </BrowserRouter>
+      </Provider>,
+    );
+
+    // Проверяем, что прелоадер все еще показывается (или показывается ошибка)
+    expect(screen.getByTestId('preloader')).toBeInTheDocument();
+
+    consoleSpy.mockRestore();
+  });
+});
+
+// Дополнительный тест для проверки стилей и структуры
+describe('App Structure', () => {
+  test('имеет правильную структуру классов', () => {
+    store = mockStore({
+      app: { initialized: true },
+    });
+
+    const { container } = render(
+      <Provider store={store}>
+        <BrowserRouter>
+          <SamuraiJSApp />
+        </BrowserRouter>
+      </Provider>,
+    );
+
+    expect(container.firstChild).toHaveClass('app-wrapper');
+    expect(container.querySelector('.app-wrapper-content')).toBeInTheDocument();
+  });
+});
+describe('App Component', () => {
+  test('рендерит основной контент после инициализации', () => {
+    render(<SamuraiJSApp />, {
+      initialState: {
+        app: { initialized: true },
+      },
+    });
+
+    expect(screen.getByTestId('header')).toBeInTheDocument();
+    expect(screen.getByTestId('navbar')).toBeInTheDocument();
+    expect(screen.getByTestId('profile')).toBeInTheDocument();
+  });
+});
